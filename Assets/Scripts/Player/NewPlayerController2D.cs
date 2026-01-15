@@ -71,6 +71,10 @@ public class PlayerController2D : MonoBehaviour
     public string deathRightAnim;
     public string deathLeftAnim;
 
+    [Header("Death Settings")]
+    public AudioClip deathSound;
+    public float deathYOffset = 0f;
+
     [Header("Weapon System")]
     public bool hasSpear = false;
     public GameObject spearObject;
@@ -127,9 +131,6 @@ public class PlayerController2D : MonoBehaviour
         UpdateAnimationState();
     }
 
-    // -------------------------
-    // GROUND CHECK
-    // -------------------------
     void GroundCheck()
     {
         bool leftHit = Physics2D.Raycast(leftFoot.position, Vector2.down, groundCheckDistance, groundLayer);
@@ -139,14 +140,9 @@ public class PlayerController2D : MonoBehaviour
         isGrounded = leftHit || rightHit;
 
         if (!wasGrounded && isGrounded)
-        {
             isJumping = false;
-        }
     }
 
-    // -------------------------
-    // WALL CHECK
-    // -------------------------
     void WallCheck()
     {
         Vector2 wallOrigin = transform.position + new Vector3(facingRight ? 0.4f : -0.4f, 0, 0);
@@ -159,9 +155,6 @@ public class PlayerController2D : MonoBehaviour
         );
     }
 
-    // -------------------------
-    // MOVEMENT
-    // -------------------------
     void HandleMovement()
     {
         horizontalInput = Input.GetAxisRaw("Horizontal");
@@ -174,9 +167,6 @@ public class PlayerController2D : MonoBehaviour
         rb.velocity = new Vector2(horizontalInput * runSpeed, rb.velocity.y);
     }
 
-    // -------------------------
-    // JUMPING + WALL JUMP
-    // -------------------------
     void HandleJump()
     {
         bool jumpPressed =
@@ -204,9 +194,6 @@ public class PlayerController2D : MonoBehaviour
         }
     }
 
-    // -------------------------
-    // WALL SLIDE
-    // -------------------------
     void HandleWallSlide()
     {
         isWallSliding = false;
@@ -221,9 +208,6 @@ public class PlayerController2D : MonoBehaviour
         }
     }
 
-    // -------------------------
-    // ATTACKING
-    // -------------------------
     void HandleAttack()
     {
         if (!hasSpear)
@@ -278,9 +262,6 @@ public class PlayerController2D : MonoBehaviour
         }
     }
 
-    // -------------------------
-    // SPEAR FOLLOW LOGIC
-    // -------------------------
     void UpdateSpearFollow()
     {
         if (!hasSpear || spearObject == null)
@@ -300,9 +281,6 @@ public class PlayerController2D : MonoBehaviour
             spearObject.transform.position = spearFollowLeft.position;
     }
 
-    // -------------------------
-    // STEP CLIMB
-    // -------------------------
     void StepClimb()
     {
         if (horizontalInput == 0)
@@ -325,14 +303,9 @@ public class PlayerController2D : MonoBehaviour
         );
 
         if (lowerHit && !upperHit)
-        {
             transform.position += new Vector3(0, stepHeight, 0);
-        }
     }
 
-    // -------------------------
-    // ANIMATION STATE MACHINE
-    // -------------------------
     void UpdateAnimationState()
     {
         if (isDead)
@@ -383,9 +356,6 @@ public class PlayerController2D : MonoBehaviour
             animator.Play(animName);
     }
 
-    // -------------------------
-    // HEALTH SYSTEM
-    // -------------------------
     public void TakeDamage(int amount)
     {
         if (isDead)
@@ -441,26 +411,15 @@ public class PlayerController2D : MonoBehaviour
     void UpdateGhostHearts()
     {
         if (ghostHearts == null || ghostHearts.Length == 0)
-        {
-            Debug.LogWarning("Ghost hearts array is empty or not assigned.");
             return;
-        }
 
         for (int i = 0; i < ghostHearts.Length; i++)
         {
-            if (ghostHearts[i] == null)
-            {
-                Debug.LogWarning($"Ghost heart at index {i} is NULL.");
-                continue;
-            }
-
-            ghostHearts[i].enabled = (i < currentHealth);
+            if (ghostHearts[i] != null)
+                ghostHearts[i].enabled = (i < currentHealth);
         }
     }
 
-    // -------------------------
-    // DEATH + RESPAWN
-    // -------------------------
     void Die()
     {
         if (isDead)
@@ -474,6 +433,15 @@ public class PlayerController2D : MonoBehaviour
         rb.velocity = Vector2.zero;
         rb.isKinematic = true;
 
+        if (audioSource != null && deathSound != null)
+            audioSource.PlayOneShot(deathSound);
+
+        transform.position = new Vector3(
+            transform.position.x,
+            transform.position.y + deathYOffset,
+            transform.position.z
+        );
+
         string deathAnim = facingRight ? deathRightAnim : deathLeftAnim;
         if (!string.IsNullOrEmpty(deathAnim))
             animator.Play(deathAnim);
@@ -485,24 +453,25 @@ public class PlayerController2D : MonoBehaviour
 
     IEnumerator DeathSequence()
     {
-        // Wait for death animation to finish
         AnimatorStateInfo info = animator.GetCurrentAnimatorStateInfo(0);
         yield return new WaitForSeconds(info.length);
 
-        // Fade out
         if (ScreenFader.instance != null)
             yield return ScreenFader.instance.FadeOut();
 
-        // Teleport to checkpoint
-        transform.position = CheckpointManager.instance.GetLastCheckpointPosition();
+        Vector3 respawnPos = CheckpointManager.instance.GetLastCheckpointPosition();
 
-        // Reset player
+        transform.position = new Vector3(
+            respawnPos.x,
+            respawnPos.y,
+            respawnPos.z
+        );
+
         rb.isKinematic = false;
         currentHealth = maxHealth;
         UpdateGhostHearts();
         isDead = false;
 
-        // Fade in
         if (ScreenFader.instance != null)
             yield return ScreenFader.instance.FadeIn();
     }

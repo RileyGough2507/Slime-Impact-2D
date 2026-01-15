@@ -9,8 +9,11 @@ public class SpearPickup : MonoBehaviour
         if (player != null)
         {
             player.hasSpear = true;
-            player.spearObject.SetActive(true);
-            Destroy(gameObject); // remove pickup from world
+
+            if (player.spearObject != null)
+                player.spearObject.SetActive(true);
+
+            Destroy(gameObject);
         }
     }
 }
