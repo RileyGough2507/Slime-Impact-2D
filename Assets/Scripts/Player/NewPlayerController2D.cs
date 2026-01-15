@@ -36,6 +36,12 @@ public class PlayerController2D : MonoBehaviour
     private float attackLockTimer = 0f;
     private bool isAttacking = false;
 
+    [Header("Attack Hitbox")]
+    public Collider2D attackHitbox;
+    public Vector2 hitboxOffsetRight;
+    public Vector2 hitboxOffsetLeft;
+    public LayerMask enemyLayer;
+
     [Header("Health Settings")]
     public int maxHealth = 5;
     public int currentHealth;
@@ -67,7 +73,6 @@ public class PlayerController2D : MonoBehaviour
     public string attackRightAnim;
     public string attackLeftAnim;
 
-    // Death animations inside Animation section
     public string deathRightAnim;
     public string deathLeftAnim;
 
@@ -109,6 +114,9 @@ public class PlayerController2D : MonoBehaviour
 
         if (spearObject != null)
             spearObject.SetActive(false);
+
+        if (attackHitbox != null)
+            attackHitbox.enabled = false;
     }
 
     void Update()
@@ -127,8 +135,20 @@ public class PlayerController2D : MonoBehaviour
         UpdateAttackLock();
         UpdateSpearFollow();
         StepClimb();
+        UpdateAttackHitboxPosition();
 
         UpdateAnimationState();
+    }
+
+    void UpdateAttackHitboxPosition()
+    {
+        if (attackHitbox == null)
+            return;
+
+        if (facingRight)
+            attackHitbox.transform.localPosition = hitboxOffsetRight;
+        else
+            attackHitbox.transform.localPosition = hitboxOffsetLeft;
     }
 
     void GroundCheck()
@@ -240,6 +260,18 @@ public class PlayerController2D : MonoBehaviour
         {
             attackCooldownTimer = baseAttackCooldown;
         }
+    }
+
+    public void StartAttackHitbox()
+    {
+        if (attackHitbox != null)
+            attackHitbox.enabled = true;
+    }
+
+    public void EndAttackHitbox()
+    {
+        if (attackHitbox != null)
+            attackHitbox.enabled = false;
     }
 
     void UpdateAttackLock()
@@ -354,6 +386,16 @@ public class PlayerController2D : MonoBehaviour
     {
         if (!string.IsNullOrEmpty(animName))
             animator.Play(animName);
+    }
+
+    private void OnTriggerEnter2D(Collider2D other)
+    {
+        if (!isAttacking)
+            return;
+
+        BlueSlime slime = other.GetComponent<BlueSlime>();
+        if (slime != null)
+            slime.TakeHit();
     }
 
     public void TakeDamage(int amount)

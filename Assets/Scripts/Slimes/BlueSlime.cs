@@ -31,36 +31,44 @@ public class BlueSlime : MonoBehaviour
     public Transform groundCheckPoint;
     public float groundCheckDistance = 0.2f;
 
+    [Header("Health")]
+    public int maxHealth = 2;
+    private int currentHealth;
+
+    [Header("Audio")]
+    public AudioSource audioSource;
+    public AudioClip deathSound;
+
     private bool isAttacking = false;
     private bool isDead = false;
     private bool facingRight = true;
     private float attackTimer = 0f;
+
+    void Start()
+    {
+        currentHealth = maxHealth;
+    }
 
     void Update()
     {
         if (isDead)
             return;
 
-        // Auto upright
         if (IsGrounded())
             transform.rotation = Quaternion.Euler(0, 0, 0);
 
-        // Attack cooldown
         if (attackTimer > 0)
             attackTimer -= Time.deltaTime;
 
-        // If attacking, don't move
         if (isAttacking)
             return;
 
-        // Check if player is in front attack hitbox
         if (PlayerInAttackRange() && attackTimer <= 0)
         {
             StartAttack();
             return;
         }
 
-        // Otherwise chase or idle
         float distance = Vector2.Distance(transform.position, player.position);
 
         if (distance <= detectionRange)
@@ -159,12 +167,27 @@ public class BlueSlime : MonoBehaviour
         isAttacking = false;
     }
 
+    // -------------------------
+    // DAMAGE FROM PLAYER
+    // -------------------------
     public void TakeHit()
     {
         if (isDead)
             return;
 
+        currentHealth -= 1;
+
+        if (currentHealth > 0)
+        {
+            // Optional: play a hurt animation or flash effect here
+            return;
+        }
+
+        // Slime dies
         isDead = true;
+
+        if (audioSource != null && deathSound != null)
+            audioSource.PlayOneShot(deathSound);
 
         if (facingRight)
             animator.Play(deathRightAnim);

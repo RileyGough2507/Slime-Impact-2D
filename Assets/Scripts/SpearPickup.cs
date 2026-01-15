@@ -13,6 +13,9 @@ public class SpearPickup : MonoBehaviour
             if (player.spearObject != null)
                 player.spearObject.SetActive(true);
 
+            // COMPLETE THE OBJECTIVE
+            MissionObjectiveUI.instance.CompleteObjective();
+
             Destroy(gameObject);
         }
     }
