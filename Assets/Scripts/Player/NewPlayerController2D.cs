@@ -34,7 +34,7 @@ public class PlayerController2D : MonoBehaviour
     private float comboTimer = 0f;
 
     private float attackLockTimer = 0f;
-    private bool isAttacking = false;
+    public bool isAttacking = false;   // ⭐ MADE PUBLIC
 
     [Header("Attack Hitbox")]
     public Collider2D attackHitbox;
