@@ -1,5 +1,4 @@
-using UnityEngine;
-using UnityEngine.UI;
+﻿using UnityEngine;
 using TMPro;
 using System.Collections;
 using System.Collections.Generic;
@@ -27,6 +26,8 @@ public class DialogueTyper : MonoBehaviour
 
     private bool isTyping = false;
     private bool isFinished = false;
+    private bool hasClosedOnce = false;   // ⭐ NEW — prevents reopening fade
+    private Coroutine bobRoutine;
 
     void Start()
     {
@@ -44,8 +45,9 @@ public class DialogueTyper : MonoBehaviour
 
     void Update()
     {
-        if (isFinished && Input.GetMouseButtonDown(0))
+        if (isFinished && !hasClosedOnce && Input.GetMouseButtonDown(0))
         {
+            hasClosedOnce = true; // ⭐ Prevents future fades
             StartCoroutine(FadeOutDialogue());
         }
     }
@@ -65,15 +67,24 @@ public class DialogueTyper : MonoBehaviour
             yield return new WaitForSeconds(typeSpeed);
         }
 
+        // ⭐ STOP AUDIO IMMEDIATELY
+        if (typingAudio != null)
+            typingAudio.Stop();
+
         isTyping = false;
         isFinished = true;
         portraitController.StopTalking();
+
         continuePrompt.gameObject.SetActive(true);
+
+        // ⭐ Start bobbing animation
+        bobRoutine = StartCoroutine(BobContinuePrompt());
     }
 
     IEnumerator FadeOutDialogue()
     {
         float t = 0f;
+
         while (t < fadeDuration)
         {
             t += Time.deltaTime;
@@ -87,5 +98,29 @@ public class DialogueTyper : MonoBehaviour
         // Restore hidden objects
         foreach (var obj in hideObjects)
             if (obj != null) obj.SetActive(true);
+
+        // ⭐ CALL THIS LAST — AFTER EVERYTHING IS DONE
+        portraitController.OnDialogueClosed();
+    }
+
+
+    // -----------------------------------------
+    // ⭐ Bobbing animation for "Click to continue"
+    // -----------------------------------------
+    IEnumerator BobContinuePrompt()
+    {
+        Vector3 basePos = continuePrompt.rectTransform.localPosition;
+        float timer = 0f;
+
+        while (true)
+        {
+            timer += Time.deltaTime * 2f; // speed
+            float offset = Mathf.Sin(timer) * 5f; // height
+
+            continuePrompt.rectTransform.localPosition =
+                basePos + new Vector3(0, offset, 0);
+
+            yield return null;
+        }
     }
 }

@@ -620,9 +620,9 @@ MonoBehaviour:
     can call me Boo. I'm here to help you in any way possible! First lets retrieve
     your spear, I did try myself but it was way too heavy, it should be just beyond
     this cave.
-  typeSpeed: 0.05
+  typeSpeed: 0.08
   typingAudio: {fileID: 329884389}
-  typingSound: {fileID: 8300000, guid: 408d22d5a6448684c8c431916aebdcdc, type: 3}
+  typingSound: {fileID: 8300000, guid: a45aff95e067c2743b845d0bd8639082, type: 3}
   fadeDuration: 1
   hideObjects:
   - {fileID: 638954457}
@@ -1579,7 +1579,7 @@ AudioSource:
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 0}
   m_PlayOnAwake: 0
-  m_Volume: 0.477
+  m_Volume: 0.094
   m_Pitch: 1
   Loop: 0
   Mute: 0
@@ -17672,6 +17672,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   defaultPortrait: {fileID: 21300000, guid: 17efbeda931d5054187115566ec9d5cd, type: 3}
+  idlePortrait: {fileID: 21300000, guid: bb74e1ebb3eed944da198b0b977749e2, type: 3}
+  talkingPortrait: {fileID: 21300000, guid: 2fa6915b4f221fb42afb509fd7ee2341, type: 3}
   damagePortrait: {fileID: 21300000, guid: 1c99775e7a303e940b8fe9de88f9e571, type: 3}
   portraitImage: {fileID: 574491749}
   damageDisplayTime: 3
@@ -20992,7 +20994,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -349, y: -532}
+  m_AnchoredPosition: {x: 133, y: -509}
   m_SizeDelta: {x: 253.4637, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1605397072
@@ -21459,7 +21461,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3895581148387500165, guid: 0861cbc91f1dd5740ab09971fcb0bb47, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 101.23
+      value: 97.04
       objectReference: {fileID: 0}
     - target: {fileID: 3895581148387500165, guid: 0861cbc91f1dd5740ab09971fcb0bb47, type: 3}
       propertyPath: m_LocalPosition.y
