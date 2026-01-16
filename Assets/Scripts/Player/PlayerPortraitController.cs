@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
 
@@ -7,15 +7,16 @@ public class PlayerPortraitController : MonoBehaviour
     [Header("Portrait Sprites")]
     public Sprite defaultPortrait;
     public Sprite damagePortrait;
-    // Future: public Sprite killPortrait;
+    public Sprite talkingPortrait;   // ⭐ NEW — assign your talking sprite here
 
     [Header("UI Reference")]
-    public Image portraitImage; // Assign your UI Image here
+    public Image portraitImage;
 
     [Header("Settings")]
     public float damageDisplayTime = 3f;
 
     private Coroutine damageRoutine;
+    private bool isTalking = false;
 
     void Start()
     {
@@ -23,10 +24,36 @@ public class PlayerPortraitController : MonoBehaviour
         portraitImage.sprite = defaultPortrait;
     }
 
-    // Call this from the player when they take damage
+    // -----------------------------
+    // TALKING CONTROL (Dialogue)
+    // -----------------------------
+    public void StartTalking()
+    {
+        if (damageRoutine != null)
+            return; // Damage portrait overrides talking
+
+        isTalking = true;
+
+        if (talkingPortrait != null)
+            portraitImage.sprite = talkingPortrait;
+    }
+
+    public void StopTalking()
+    {
+        if (damageRoutine != null)
+            return; // Still showing damage portrait
+
+        isTalking = false;
+
+        if (defaultPortrait != null)
+            portraitImage.sprite = defaultPortrait;
+    }
+
+    // -----------------------------
+    // DAMAGE CONTROL (Overrides talking)
+    // -----------------------------
     public void OnPlayerDamaged()
     {
-        // If already showing damage portrait, restart timer
         if (damageRoutine != null)
             StopCoroutine(damageRoutine);
 
@@ -39,10 +66,16 @@ public class PlayerPortraitController : MonoBehaviour
 
         yield return new WaitForSeconds(damageDisplayTime);
 
-        portraitImage.sprite = defaultPortrait;
         damageRoutine = null;
-    }
 
-    // Future expansion:
-    // public void OnPlayerKillEnemy() { ... }
+        // If dialogue is still talking, return to talking portrait
+        if (isTalking && talkingPortrait != null)
+        {
+            portraitImage.sprite = talkingPortrait;
+        }
+        else
+        {
+            portraitImage.sprite = defaultPortrait;
+        }
+    }
 }

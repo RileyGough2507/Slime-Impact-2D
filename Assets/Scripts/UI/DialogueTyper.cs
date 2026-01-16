@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System.Collections;
+using System.Collections.Generic;
 
 public class DialogueTyper : MonoBehaviour
 {
@@ -21,11 +22,18 @@ public class DialogueTyper : MonoBehaviour
     [Header("Fade Settings")]
     public float fadeDuration = 0.5f;
 
+    [Header("Hide While Talking")]
+    public List<GameObject> hideObjects = new List<GameObject>();
+
     private bool isTyping = false;
     private bool isFinished = false;
 
     void Start()
     {
+        // Hide assigned objects
+        foreach (var obj in hideObjects)
+            if (obj != null) obj.SetActive(false);
+
         dialogueCanvas.alpha = 1f;
         dialogueCanvas.blocksRaycasts = true;
         continuePrompt.gameObject.SetActive(false);
@@ -75,5 +83,9 @@ public class DialogueTyper : MonoBehaviour
 
         dialogueCanvas.alpha = 0f;
         dialogueCanvas.blocksRaycasts = false;
+
+        // Restore hidden objects
+        foreach (var obj in hideObjects)
+            if (obj != null) obj.SetActive(true);
     }
 }
