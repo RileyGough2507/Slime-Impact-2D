@@ -4,12 +4,19 @@ using TMPro;
 
 public class BossHealthBar : MonoBehaviour
 {
-    public Image fillBar;
+    public Slider fillBar;
     public TextMeshProUGUI bossName;
 
     private float maxHealth;
     private float currentHealth;
 
+
+    private void Start()
+    {
+        fillBar= GetComponent<Slider>();
+        Initialize(bossName.text, maxHealth);
+        SetHealth(maxHealth);
+    }
     public void Initialize(string name, float maxHP)
     {
         bossName.text = name;
@@ -27,6 +34,6 @@ public class BossHealthBar : MonoBehaviour
     void UpdateBar()
     {
         if (fillBar != null)
-            fillBar.fillAmount = currentHealth / maxHealth;
+            fillBar.value = currentHealth / maxHealth;
     }
 }

@@ -68,7 +68,7 @@ public class PlayerController2D : MonoBehaviour
 
     [Header("Sound Effects")]
     public AudioSource audioSource;
-    public AudioClip attackSound;
+    public AudioClip[] attackSounds;
     public AudioClip damageSound;
     public AudioClip deathSound;
     public AudioClip heartbeatSound;
@@ -151,21 +151,15 @@ public class PlayerController2D : MonoBehaviour
         {
             isAttacking = true;
 
-            // Play sound
-            if (audioSource != null && attackSound != null)
-                audioSource.PlayOneShot(attackSound);
+            PlayRandomAttackSound();
 
-            // Start hitbox
             StartAttackHitbox();
             Invoke(nameof(EndAttackHitbox), attackDuration);
 
-            // Animation
             animator.Play(facingRight ? attackRightAnim : attackLeftAnim);
 
-            // Cooldown
             nextAttackTime = Time.time + attackCooldown;
 
-            // Combo tracking
             comboCount++;
             comboTimer = comboWindow;
 
@@ -175,6 +169,15 @@ public class PlayerController2D : MonoBehaviour
                 Invoke(nameof(ResetComboLockout), comboLockout);
             }
         }
+    }
+
+    void PlayRandomAttackSound()
+    {
+        if (audioSource == null || attackSounds == null || attackSounds.Length == 0)
+            return;
+
+        int index = Random.Range(0, attackSounds.Length);
+        audioSource.PlayOneShot(attackSounds[index]);
     }
 
     void UpdateComboTimer()
@@ -272,14 +275,17 @@ public class PlayerController2D : MonoBehaviour
             return;
 
         if (isAttacking)
+        {
+            spearObject.SetActive(false);
             return;
+        }
+
+        spearObject.SetActive(true);
 
         if (facingRight && spearFollowRight != null)
             spearObject.transform.position = spearFollowRight.position;
         else if (!facingRight && spearFollowLeft != null)
             spearObject.transform.position = spearFollowLeft.position;
-
-        spearObject.SetActive(true);
     }
 
     // -----------------------------
@@ -302,7 +308,6 @@ public class PlayerController2D : MonoBehaviour
 
         UpdateGhostHearts();
 
-        // Play damage sound
         if (audioSource != null && damageSound != null)
             audioSource.PlayOneShot(damageSound);
 
@@ -311,7 +316,11 @@ public class PlayerController2D : MonoBehaviour
             isDead = true;
             rb.velocity = Vector2.zero;
 
-            // Death sound
+            // 🔥 NEW: Reset Red Riot if he killed the player
+            RedRiotBoss riot = FindObjectOfType<RedRiotBoss>();
+            if (riot != null)
+                riot.OnPlayerDied();
+
             if (audioSource != null && deathSound != null)
                 audioSource.PlayOneShot(deathSound);
 

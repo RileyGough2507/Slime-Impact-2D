@@ -15,11 +15,12 @@ public class RedRiotTrigger : MonoBehaviour
     public AudioSource bossMusic;
 
     private bool triggered = false;
+    public GameObject bossHealthUI;
 
     void Start()
     {
         if (bossUIRoot != null)
-            bossUIRoot.SetActive(false);
+           // bossUIRoot.SetActive(false);
 
         if (boss != null)
             boss.enabled = false;
@@ -39,8 +40,9 @@ public class RedRiotTrigger : MonoBehaviour
         triggered = true;
 
         // Show UI
-        if (bossUIRoot != null)
-            bossUIRoot.SetActive(true);
+        //if (bossUIRoot != null)
+        //    bossUIRoot.SetActive(true);
+        //    bossHealthUI.SetActive(true);
 
         if (bossName != null)
             bossName.text = bossTitle;

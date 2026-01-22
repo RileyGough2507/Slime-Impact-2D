@@ -103,7 +103,7 @@ public class RedRiotBoss : MonoBehaviour
         canAttack = true;
 
         if (healthBarObject != null)
-            healthBarObject.SetActive(true);
+            //healthBarObject.SetActive(true);
 
         UpdateHealthBar();
         StartCoroutine(AttackLoop());
@@ -301,6 +301,29 @@ public class RedRiotBoss : MonoBehaviour
 
         UpdateHealthBar();
     }
+
+    public void OnPlayerDied()
+{
+    if (isDead)
+        return;
+
+    fightStarted = false;
+    canAttack = false;
+    isTeleporting = false;
+
+    currentHealth = maxHealth;
+    shotCounter = 0;
+
+    transform.position = originalPosition;
+
+    animator.Play(idleAnimName);
+
+    if (healthBarObject != null)
+        healthBarObject.SetActive(false);
+
+    UpdateHealthBar();
+}
+
 
     void UpdateHealthBar()
     {
