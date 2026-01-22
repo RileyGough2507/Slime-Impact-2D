@@ -10,6 +10,10 @@ public class RedRiotBoss : MonoBehaviour
     public AudioSource audioSource;
     public SpriteRenderer spriteRenderer;
 
+    [Header("Music")]
+    public AudioSource normalMusic;
+    public AudioSource bossMusic;
+
     [Header("Health")]
     public int maxHealth = 40;
     private int currentHealth;
@@ -40,7 +44,7 @@ public class RedRiotBoss : MonoBehaviour
     public GameObject bulletPrefab;
     public Transform firePoint;
     public float bulletSpeed = 10f;
-    public float timeBetweenShots = 3.5f;
+    public float timeBetweenShots = 3f;
 
     [Header("Bomb")]
     public GameObject bombPrefab;
@@ -89,11 +93,9 @@ public class RedRiotBoss : MonoBehaviour
             healthBarObject.SetActive(false);
     }
 
-    void OnDestroy()
-    {
-        // Removed PlayerDiedEvent unsubscribe
-    }
-
+    // -----------------------------
+    // START BOSS FIGHT
+    // -----------------------------
     public void StartBoss()
     {
         if (isDead)
@@ -102,12 +104,17 @@ public class RedRiotBoss : MonoBehaviour
         fightStarted = true;
         canAttack = true;
 
+        // MUSIC SWITCH
+        if (normalMusic != null) normalMusic.Stop();
+        if (bossMusic != null && !bossMusic.isPlaying) bossMusic.Play();
+
         if (healthBarObject != null)
-            //healthBarObject.SetActive(true);
+            healthBarObject.SetActive(true);
 
         UpdateHealthBar();
         StartCoroutine(AttackLoop());
     }
+
 
     IEnumerator AttackLoop()
     {
@@ -120,6 +127,9 @@ public class RedRiotBoss : MonoBehaviour
         }
     }
 
+    // -----------------------------
+    // SHOOTING
+    // -----------------------------
     public void FireShot()
     {
         if (!fightStarted || isTeleporting || isDead)
@@ -167,13 +177,26 @@ public class RedRiotBoss : MonoBehaviour
         PlaySound(bombFireClip);
     }
 
+    // -----------------------------
+    // DAMAGE
+    // -----------------------------
     public void TakeHitFrom(GameObject source)
     {
         if (isDead || isTeleporting)
             return;
 
-        if (!source.CompareTag("Player"))
+        PlayerController2D player = source.GetComponentInParent<PlayerController2D>();
+        if (player == null)
             return;
+
+        // If this hit will kill him, DO NOT teleport
+        if (currentHealth <= 1)
+        {
+            currentHealth--;
+            UpdateHealthBar();
+            Die();
+            return;
+        }
 
         PlaySound(damageClip);
         StartCoroutine(FlashRed());
@@ -186,15 +209,24 @@ public class RedRiotBoss : MonoBehaviour
             Die();
     }
 
+
     IEnumerator FlashRed()
     {
         spriteRenderer.material.color = hitColor;
         yield return new WaitForSeconds(flashDuration);
         spriteRenderer.material.color = originalColor;
     }
-
+    // -----------------------------
+    // TELEPORT
+    // -----------------------------
     IEnumerator TeleportSequence()
     {
+        // Do NOT teleport if dying
+        if (isDead || currentHealth <= 1)
+            yield break;
+
+
+
         isTeleporting = true;
         canAttack = false;
 
@@ -258,6 +290,9 @@ public class RedRiotBoss : MonoBehaviour
             rb.velocity = Vector2.zero;
     }
 
+    // -----------------------------
+    // DEATH
+    // -----------------------------
     void Die()
     {
         if (isDead)
@@ -267,23 +302,76 @@ public class RedRiotBoss : MonoBehaviour
         canAttack = false;
         isTeleporting = false;
 
-        PlaySound(deathClip);
-        animator.Play(deathAnimName);
+        // Stop all ongoing actions (teleport, attack loop, etc.)
+        StopAllCoroutines();
 
+        // Stop boss music, return to normal music
+        if (bossMusic != null) bossMusic.Stop();
+        if (normalMusic != null && !normalMusic.isPlaying) normalMusic.Play();
+
+        // Hide Red Riot visually + disable hitbox
+        if (spriteRenderer != null)
+            spriteRenderer.enabled = false;
+
+        if (hitbox != null)
+            hitbox.enabled = false;
+
+        // Play death sound
+        PlaySound(deathClip);
+
+        // Play explosion sound + spawn explosion
+        if (explosionPrefab != null)
+        {
+            Vector3 spawnPos = transform.position + (Vector3)spriteOffset;
+            GameObject explosion = Instantiate(explosionPrefab, spawnPos, Quaternion.identity);
+            Destroy(explosion, 1.5f);
+        }
+
+        PlaySound(explosionSound);
+
+        // Hide health bar
         if (healthBarObject != null)
             healthBarObject.SetActive(false);
+
+        // Destroy Red Riot AFTER sounds finish
+        Destroy(gameObject, 2f);
+
+        // Disable assigned objects
+        if (objectsToDisable != null)
+        {
+            foreach (GameObject obj in objectsToDisable)
+            {
+                if (obj != null)
+                    obj.SetActive(false);
+            }
+        }
+
     }
 
-    public void OnDeathAnimationFinished()
+
+
+
+
+    // -----------------------------
+    // PLAYER DEATH RESET
+    // -----------------------------
+    public void OnPlayerDied()
     {
-        if (deathDropPrefab != null)
-            Instantiate(deathDropPrefab, transform.position, Quaternion.identity);
+        // Restore 10 HP, but cap at 25
+        currentHealth = Mathf.Min(currentHealth + 10, 25);
 
-        Destroy(gameObject);
+        UpdateHealthBar();
     }
 
+
+
+    // -----------------------------
+    // MANUAL RESET (OPTIONAL)
+    // -----------------------------
     public void ResetBoss()
     {
+        StopAllCoroutines();
+
         fightStarted = false;
         canAttack = false;
         isTeleporting = false;
@@ -302,29 +390,9 @@ public class RedRiotBoss : MonoBehaviour
         UpdateHealthBar();
     }
 
-    public void OnPlayerDied()
-{
-    if (isDead)
-        return;
-
-    fightStarted = false;
-    canAttack = false;
-    isTeleporting = false;
-
-    currentHealth = maxHealth;
-    shotCounter = 0;
-
-    transform.position = originalPosition;
-
-    animator.Play(idleAnimName);
-
-    if (healthBarObject != null)
-        healthBarObject.SetActive(false);
-
-    UpdateHealthBar();
-}
-
-
+    // -----------------------------
+    // HELPERS
+    // -----------------------------
     void UpdateHealthBar()
     {
         if (healthSlider != null)
@@ -336,4 +404,12 @@ public class RedRiotBoss : MonoBehaviour
         if (audioSource != null && clip != null)
             audioSource.PlayOneShot(clip);
     }
+
+    [Header("Death Explosion")]
+    public GameObject explosionPrefab;   // explosion animation prefab
+    public AudioClip explosionSound;     // sound to play on death
+
+    [Header("Disable On Death")]
+    public GameObject[] objectsToDisable;
+
 }
