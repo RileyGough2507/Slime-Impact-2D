@@ -233,4 +233,11 @@ public class BlueSlime : MonoBehaviour
 
         Gizmos.DrawLine(origin, origin + direction * attackHitboxDistance);
     }
+
+    public void TakeDamage(int amount)
+    {
+        for (int i = 0; i < amount; i++)
+            TakeHit();
+    }
+
 }

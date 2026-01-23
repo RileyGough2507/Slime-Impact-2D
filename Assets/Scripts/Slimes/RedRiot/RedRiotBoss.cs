@@ -320,12 +320,18 @@ public class RedRiotBoss : MonoBehaviour
         PlaySound(deathClip);
 
         // Play explosion sound + spawn explosion
+        // Play explosion sound + spawn explosion
         if (explosionPrefab != null)
         {
             Vector3 spawnPos = transform.position + (Vector3)spriteOffset;
             GameObject explosion = Instantiate(explosionPrefab, spawnPos, Quaternion.identity);
             Destroy(explosion, 1.5f);
+
+            // 🔥 Spawn the drop immediately when explosion starts
+            if (deathDropPrefab != null)
+                Instantiate(deathDropPrefab, transform.position, Quaternion.identity);
         }
+
 
         PlaySound(explosionSound);
 

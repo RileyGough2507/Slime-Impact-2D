@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 public class GhostProjectile : MonoBehaviour
 {
@@ -19,86 +19,66 @@ public class GhostProjectile : MonoBehaviour
     private SpriteRenderer spriteRenderer;
 
     [Header("Damage Source")]
-    public GameObject sourceObject; // The player or ability object that fired this
+    public GameObject sourceObject;
 
     private float direction;
     private float timer;
+    private bool hasExploded = false;
 
     void Awake()
     {
         spriteRenderer = GetComponent<SpriteRenderer>();
     }
 
-    // Called by GhostBomb when firing
     public void Init(float dir, GameObject source)
     {
         direction = dir;
         sourceObject = source;
         timer = lifetime;
 
-        // Set sprite based on direction
         if (spriteRenderer != null)
-        {
-            if (direction > 0 && rightSprite != null)
-                spriteRenderer.sprite = rightSprite;
-
-            if (direction < 0 && leftSprite != null)
-                spriteRenderer.sprite = leftSprite;
-        }
+            spriteRenderer.sprite = direction > 0 ? rightSprite : leftSprite;
     }
 
     void Update()
     {
+        if (hasExploded)
+            return;
+
         transform.Translate(Vector2.right * direction * speed * Time.deltaTime);
 
         timer -= Time.deltaTime;
         if (timer <= 0f)
-        {
             Explode();
-        }
     }
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        // Blue Slime
-        BlueSlime slime = other.GetComponent<BlueSlime>();
-        if (slime != null)
-        {
-            slime.TakeHit();
+        if (!hasExploded)
             Explode();
-            return;
-        }
-
-        // Red Riot Boss
-        RedRiotBoss boss = other.GetComponent<RedRiotBoss>();
-        if (boss != null)
-        {
-            boss.TakeHitFrom(sourceObject);
-            Explode();
-            return;
-        }
-
-        // Cracked tile
-        if (other.CompareTag("Cracked"))
-        {
-            Destroy(other.gameObject);
-            Explode();
-            return;
-        }
-
-        // Anything else
-        Explode();
     }
 
     void Explode()
     {
-        // Play explosion sound
+        if (hasExploded)
+            return;
+
+        hasExploded = true;
+
+        // Spawn explosion prefab (this now handles damage)
+        if (explosionPrefab != null)
+        {
+            GameObject exp = Instantiate(explosionPrefab, transform.position, Quaternion.identity);
+
+            // Pass the source to the explosion
+            ExplosionDamage expScript = exp.GetComponent<ExplosionDamage>();
+            if (expScript != null)
+                expScript.sourceObject = sourceObject;
+        }
+
+        // Play sound
         if (audioSource != null && explosionSound != null)
             audioSource.PlayOneShot(explosionSound);
-
-        // Spawn explosion VFX
-        if (explosionPrefab != null)
-            Instantiate(explosionPrefab, transform.position, Quaternion.identity);
 
         Destroy(gameObject);
     }

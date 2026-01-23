@@ -50,7 +50,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   speed: 8
   lifetime: 5
-  explosionPrefab: {fileID: 1291213431067097037, guid: cfe891ebb58fbde4b91bb1202234322c, type: 3}
+  explosionPrefab: {fileID: 1291213431067097037, guid: 28bda9735fb14b5458b4072b8a328470, type: 3}
   explosionSound: {fileID: 8300000, guid: c0523a800f59a9841b6dd5a1b448cd7c, type: 3}
   audioSource: {fileID: 3650716149190500712}
   rightSprite: {fileID: 21300000, guid: 2bf092eb209459648bae18daf5fb64bd, type: 3}
@@ -133,7 +133,7 @@ Rigidbody2D:
     m_Bits: 0
   m_Interpolate: 0
   m_SleepingMode: 1
-  m_CollisionDetection: 0
+  m_CollisionDetection: 1
   m_Constraints: 4
 --- !u!61 &5292391902875757127
 BoxCollider2D:
@@ -224,7 +224,7 @@ AudioSource:
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 0}
   m_PlayOnAwake: 1
-  m_Volume: 1
+  m_Volume: 0.322
   m_Pitch: 1
   Loop: 0
   Mute: 0

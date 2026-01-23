@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 public class GhostBombPickup : MonoBehaviour
 {
@@ -12,7 +12,7 @@ public class GhostBombPickup : MonoBehaviour
 
         GhostBomb ability = player.GetComponent<GhostBomb>();
         if (ability != null)
-            ability.enabled = true;
+            ability.UnlockAbility(); // 🔥 unlock ability properly
 
         if (abilityUI != null)
             abilityUI.SetActive(true);

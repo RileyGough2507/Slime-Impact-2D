@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 
 public class GhostBomb : MonoBehaviour
@@ -26,6 +26,13 @@ public class GhostBomb : MonoBehaviour
     void Start()
     {
         player = GetComponent<PlayerController2D>();
+
+        // 🔥 Ability is LOCKED until the player picks up the drop
+        enabled = false;
+
+        // UI should not show until pickup
+        if (abilityIcon != null)
+            abilityIcon.enabled = false;
     }
 
     void Update()
@@ -76,5 +83,17 @@ public class GhostBomb : MonoBehaviour
 
         if (abilityIcon != null && readySprite != null)
             abilityIcon.sprite = readySprite;
+    }
+
+    // Called by pickup script
+    public void UnlockAbility()
+    {
+        enabled = true;
+
+        if (abilityIcon != null)
+        {
+            abilityIcon.enabled = true;
+            abilityIcon.sprite = readySprite;
+        }
     }
 }
