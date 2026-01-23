@@ -53,6 +53,15 @@ public class ExplosionDamage : MonoBehaviour
                 continue;
             }
 
+            // CACTUS SLIME
+            CactusSlime cactus = hit.GetComponent<CactusSlime>();
+            if (cactus != null)
+            {
+                for (int i = 0; i < damageAmount; i++)
+                    cactus.TakeHit();
+                continue;
+            }
+
             // RED RIOT
             RedRiotBoss boss = hit.GetComponent<RedRiotBoss>();
             if (boss != null)

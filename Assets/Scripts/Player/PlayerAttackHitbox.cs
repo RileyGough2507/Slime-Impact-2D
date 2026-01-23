@@ -28,6 +28,15 @@ public class PlayerAttackHitbox : MonoBehaviour
             return;
         }
 
+        // CACTUS SLIME
+        CactusSlime cactus = other.GetComponent<CactusSlime>();
+        if (cactus != null)
+        {
+            cactus.TakeHit();
+            return;
+        }
+
+
         // RED RIOT
         RedRiotBoss boss = other.GetComponent<RedRiotBoss>();
         if (boss != null)
