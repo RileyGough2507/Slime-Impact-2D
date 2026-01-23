@@ -22,6 +22,7 @@ public class BlueSlime : MonoBehaviour
     [Header("Movement")]
     public float moveSpeed = 2f;
     public float detectionRange = 6f;
+    public float hopForce = 1f; // NEW
 
     [Header("Attack")]
     public float attackHitboxDistance = 1.0f;
@@ -104,6 +105,14 @@ public class BlueSlime : MonoBehaviour
         );
     }
 
+    void Hop()
+    {
+        if (!IsGrounded())
+            return;
+
+        rb.velocity = new Vector2(rb.velocity.x, hopForce);
+    }
+
     bool PlayerInAttackRange()
     {
         Vector2 direction = facingRight ? Vector2.right : Vector2.left;
@@ -120,6 +129,8 @@ public class BlueSlime : MonoBehaviour
         Vector2 direction = (player.position - transform.position).normalized;
 
         transform.position += new Vector3(direction.x * moveSpeed * Time.deltaTime, 0, 0);
+
+        Hop(); // NEW
 
         if (direction.x > 0)
         {
@@ -239,5 +250,4 @@ public class BlueSlime : MonoBehaviour
         for (int i = 0; i < amount; i++)
             TakeHit();
     }
-
 }

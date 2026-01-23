@@ -23,11 +23,12 @@ public class RedSlime : MonoBehaviour
 
     [Header("Movement")]
     public float moveSpeed = 2f;
-    public float detectionRange = 25f; // can be larger than shoot range
+    public float detectionRange = 25f;
+    public float hopForce = 1f; // NEW
 
     [Header("Attack")]
     public float meleeRange = 3f;
-    public float shootRange = 20f; // NEW
+    public float shootRange = 20f;
     public float attackCooldown = 1f;
     public LayerMask playerLayer;
 
@@ -90,36 +91,27 @@ public class RedSlime : MonoBehaviour
 
         float distance = Vector2.Distance(transform.position, player.position);
 
-        // -----------------------------
-        // MELEE RANGE (highest priority)
-        // -----------------------------
+        // MELEE
         if (distance <= meleeRange && attackTimer <= 0)
         {
             StartMeleeAttack();
             return;
         }
 
-        // -----------------------------
-        // SHOOT RANGE (mid-range)
-        // -----------------------------
+        // SHOOT
         if (distance <= shootRange && attackTimer <= 0)
         {
             StartShootAttack();
             return;
         }
 
-        // -----------------------------
-        // CHASE RANGE (outside shoot range)
-        // -----------------------------
+        // CHASE
         if (distance <= detectionRange)
         {
             ChasePlayer();
             return;
         }
 
-        // -----------------------------
-        // TOO FAR → IDLE
-        // -----------------------------
         Idle();
     }
 
@@ -133,6 +125,14 @@ public class RedSlime : MonoBehaviour
         );
     }
 
+    void Hop()
+    {
+        if (!IsGrounded())
+            return;
+
+        rb.velocity = new Vector2(rb.velocity.x, hopForce);
+    }
+
     void ChasePlayer()
     {
         if (isDead || player == null)
@@ -141,6 +141,8 @@ public class RedSlime : MonoBehaviour
         Vector2 direction = (player.position - transform.position).normalized;
 
         transform.position += new Vector3(direction.x * moveSpeed * Time.deltaTime, 0, 0);
+
+        Hop(); // NEW
 
         if (direction.x > 0)
         {
@@ -227,19 +229,14 @@ public class RedSlime : MonoBehaviour
         if (projectilePrefab == null || shootPoint == null)
             return;
 
-        PlayShootSound();
+        if (audioSource != null && shootSound != null)
+            audioSource.PlayOneShot(shootSound);
 
         GameObject proj = Instantiate(projectilePrefab, shootPoint.position, Quaternion.identity);
 
         RedSlimeProjectile p = proj.GetComponent<RedSlimeProjectile>();
         if (p != null)
             p.Init(facingRight ? Vector2.right : Vector2.left);
-    }
-
-    void PlayShootSound()
-    {
-        if (audioSource != null && shootSound != null)
-            audioSource.PlayOneShot(shootSound);
     }
 
     void EndAttack()
