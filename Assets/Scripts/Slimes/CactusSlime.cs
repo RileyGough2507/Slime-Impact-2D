@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using System.Collections;
 
 public class CactusSlime : MonoBehaviour
@@ -27,13 +27,17 @@ public class CactusSlime : MonoBehaviour
 
     [Header("Shooting")]
     public GameObject spikePrefab;
-    public Transform shootPoint;
+    public Transform shootPointLeft;
+    public Transform shootPointRight;
+    public Transform shootPointUp;
     public float shootCooldown = 3f;
     private float shootTimer = 0f;
 
     [Header("Touch Damage")]
     public LayerMask playerLayer;
     public int touchDamage = 2;
+    public float touchDamageCooldown = 1f;
+    private float touchDamageTimer = 0f;
 
     [Header("Ground Check")]
     public LayerMask groundLayer;
@@ -74,13 +78,10 @@ public class CactusSlime : MonoBehaviour
 
         float distance = Vector2.Distance(transform.position, player.position);
 
-        // Always check touch damage
         CheckTouchDamage();
 
-        // Face player
         facingRight = player.position.x > transform.position.x;
 
-        // Shooting mode
         if (distance <= shootRange && distance > chaseRange)
         {
             Idle();
@@ -88,14 +89,12 @@ public class CactusSlime : MonoBehaviour
             return;
         }
 
-        // Chase mode
         if (distance <= chaseRange)
         {
             ChasePlayer();
             return;
         }
 
-        // Idle mode
         Idle();
     }
 
@@ -158,29 +157,41 @@ public class CactusSlime : MonoBehaviour
 
     void ShootSpikes()
     {
-        FireSpike(Vector2.left);
-        FireSpike(Vector2.right);
-        FireSpike(Vector2.up);
+        // Correct directions:
+        FireSpike(new Vector2(-1, 0), shootPointLeft);   // LEFT
+        FireSpike(new Vector2(1, 0), shootPointRight);   // RIGHT
+        FireSpike(new Vector2(0, 1), shootPointUp);      // UP
     }
 
-    void FireSpike(Vector2 dir)
+    void FireSpike(Vector2 dir, Transform firePoint)
     {
-        GameObject spike = Instantiate(spikePrefab, shootPoint.position, Quaternion.identity);
+        GameObject spike = Instantiate(spikePrefab, firePoint.position, firePoint.rotation);
         CactusSpike projectile = spike.GetComponent<CactusSpike>();
         projectile.Init(dir);
     }
 
     void CheckTouchDamage()
     {
+        touchDamageTimer -= Time.deltaTime;
+
         Collider2D hit = Physics2D.OverlapCircle(transform.position, 0.8f, playerLayer);
 
         if (hit != null)
         {
-            PlayerController2D p = hit.GetComponent<PlayerController2D>();
-            if (p != null)
-                p.TakeDamage(touchDamage);
+            Debug.Log("SLIME TOUCHING PLAYER"); // ⭐ TEMP DEBUG
+
+            if (touchDamageTimer <= 0f)
+            {
+                PlayerController2D p = hit.GetComponent<PlayerController2D>();
+                if (p != null)
+                {
+                    p.TakeDamage(touchDamage);
+                    touchDamageTimer = touchDamageCooldown;
+                }
+            }
         }
     }
+
 
     public void TakeHit()
     {

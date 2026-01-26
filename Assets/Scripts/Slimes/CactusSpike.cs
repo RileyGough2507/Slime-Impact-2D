@@ -3,33 +3,35 @@ using UnityEngine;
 public class CactusSpike : MonoBehaviour
 {
     public float speed = 8f;
-    public int damage = 2;
-    public LayerMask playerLayer;
+    public float lifetime = 5f;
+    public int damage = 1;
 
-    private Vector2 direction;
+    private Rigidbody2D rb;
+
+    void Start()
+    {
+        rb = GetComponent<Rigidbody2D>();
+        Destroy(gameObject, lifetime);
+    }
 
     public void Init(Vector2 dir)
     {
-        direction = dir.normalized;
-        Destroy(gameObject, 4f);
+        if (rb == null)
+            rb = GetComponent<Rigidbody2D>();
+
+        rb.velocity = dir.normalized * speed;
+
+        float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
+        //transform.rotation = Quaternion.Euler(0, 0, angle);
     }
 
-    void Update()
+    void OnTriggerEnter2D(Collider2D other)
     {
-        transform.position += (Vector3)(direction * speed * Time.deltaTime);
-
-        CheckHit();
-    }
-
-    void CheckHit()
-    {
-        Collider2D hit = Physics2D.OverlapCircle(transform.position, 0.3f, playerLayer);
-
-        if (hit != null)
+        if (other.CompareTag("Player"))
         {
-            PlayerController2D p = hit.GetComponent<PlayerController2D>();
-            if (p != null)
-                p.TakeDamage(damage);
+            PlayerController2D player = other.GetComponent<PlayerController2D>();
+            if (player != null)
+                player.TakeDamage(damage);
 
             Destroy(gameObject);
         }
