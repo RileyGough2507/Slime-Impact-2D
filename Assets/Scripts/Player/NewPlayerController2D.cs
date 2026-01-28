@@ -141,6 +141,10 @@ public class PlayerController2D : MonoBehaviour
 
     void HandleAttack()
     {
+        // ⭐ NEW: Cannot attack without spear
+        if (!hasSpear)
+            return;
+
         if (comboLocked)
             return;
 
@@ -170,6 +174,7 @@ public class PlayerController2D : MonoBehaviour
             }
         }
     }
+
 
     void PlayRandomAttackSound()
     {

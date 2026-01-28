@@ -7,22 +7,26 @@ public class PlayerShield : MonoBehaviour
     public int maxShieldHits = 3;
     public float cooldownTime = 60f;    // 1 minute cooldown
     public float visibleDuration = 3f;  // How long shield shows after blocking
+
+    [Header("Audio")]
+    public AudioSource shieldAudioSource;   // ⭐ Assign in Inspector
     public AudioClip shieldHitSound;
-    public AudioClip shieldBreakSound;  // ⭐ NEW
+    public AudioClip shieldBreakSound;
 
     private int shieldHitsRemaining;
     private bool shieldActive = false;
     private bool onCooldown = false;
 
-    private AudioSource audioSource;
     private Coroutine hideRoutine;
 
     void Start()
     {
-        audioSource = GetComponent<AudioSource>();
+        // If user forgets to assign, fallback to player's AudioSource
+        if (shieldAudioSource == null)
+            shieldAudioSource = GetComponent<AudioSource>();
 
         if (shieldVisual != null)
-            shieldVisual.SetActive(false); // ⭐ Start invisible
+            shieldVisual.SetActive(false); // Start invisible
     }
 
     void Update()
@@ -40,7 +44,7 @@ public class PlayerShield : MonoBehaviour
         shieldHitsRemaining = maxShieldHits;
         shieldActive = true;
 
-        // ⭐ Do NOT show the shield yet — only show when blocking a hit
+        // Shield stays invisible until first hit
         if (shieldVisual != null)
             shieldVisual.SetActive(false);
     }
@@ -53,7 +57,7 @@ public class PlayerShield : MonoBehaviour
 
         shieldHitsRemaining--;
 
-        // ⭐ Show shield for 3 seconds
+        // Show shield for 3 seconds
         if (shieldVisual != null)
         {
             shieldVisual.SetActive(true);
@@ -64,9 +68,9 @@ public class PlayerShield : MonoBehaviour
             hideRoutine = StartCoroutine(HideShieldAfterDelay());
         }
 
-        // ⭐ Play hit sound
-        if (audioSource != null && shieldHitSound != null)
-            audioSource.PlayOneShot(shieldHitSound);
+        // Play hit sound
+        if (shieldAudioSource != null && shieldHitSound != null)
+            shieldAudioSource.PlayOneShot(shieldHitSound);
 
         if (shieldHitsRemaining <= 0)
             BreakShield();
@@ -90,9 +94,9 @@ public class PlayerShield : MonoBehaviour
         if (shieldVisual != null)
             shieldVisual.SetActive(false);
 
-        // ⭐ Play cooldown sound
-        if (audioSource != null && shieldBreakSound != null)
-            audioSource.PlayOneShot(shieldBreakSound);
+        // Play cooldown sound
+        if (shieldAudioSource != null && shieldBreakSound != null)
+            shieldAudioSource.PlayOneShot(shieldBreakSound);
 
         Invoke(nameof(ResetShield), cooldownTime);
     }
