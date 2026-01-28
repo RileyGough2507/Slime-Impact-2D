@@ -302,6 +302,12 @@ public class PlayerController2D : MonoBehaviour
         if (isDead)
             return;
 
+        // ⭐ SHIELD CHECK GOES HERE
+        PlayerShield shield = GetComponent<PlayerShield>();
+        if (shield != null && shield.TryBlockHit())
+            return; // Shield absorbed the hit, so stop here
+
+        // ⭐ Your normal damage code continues below
         currentHealth -= amount;
         if (currentHealth < 0)
             currentHealth = 0;
@@ -316,7 +322,6 @@ public class PlayerController2D : MonoBehaviour
             isDead = true;
             rb.velocity = Vector2.zero;
 
-            // 🔥 NEW: Reset Red Riot if he killed the player
             RedRiotBoss riot = FindObjectOfType<RedRiotBoss>();
             if (riot != null)
                 riot.OnPlayerDied();

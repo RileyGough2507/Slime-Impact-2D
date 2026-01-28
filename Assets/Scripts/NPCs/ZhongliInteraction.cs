@@ -107,6 +107,12 @@ public class NPCInteraction : MonoBehaviour
 
         // Trigger mission
         MissionObjectiveUI.instance.SetObjective(missionText);
+
+        // ⭐ Give player the shield buff
+        PlayerShield shield = player.GetComponent<PlayerShield>();
+        if (shield != null)
+            shield.ActivateShield();
+
     }
 
     void OnDrawGizmosSelected()
