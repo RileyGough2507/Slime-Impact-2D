@@ -45,6 +45,10 @@ public class IfaEscortController : MonoBehaviour
     public List<GameObject> climbAreas = new List<GameObject>();
     public float climbHeight = 0.5f;
 
+    [Header("Dialogue Trigger")]
+    public GameObject dialogueObject;
+    // Assign your dialogue system here
+
     public bool escortActive = false;
     private bool halted = false;
     private bool reachedEnd = false;
@@ -109,6 +113,9 @@ public class IfaEscortController : MonoBehaviour
         if (isDead)
             return;
 
+        if (!escortActive)
+            return;
+
         if (Input.GetKeyDown(KeyCode.H))
         {
             if (hCooldown > 0)
@@ -149,6 +156,9 @@ public class IfaEscortController : MonoBehaviour
         if (isDead)
             return;
 
+        if (!escortActive)
+            return; // Safe after reaching destination
+
         currentHealth -= amount;
         if (currentHealth < 0)
             currentHealth = 0;
@@ -166,7 +176,6 @@ public class IfaEscortController : MonoBehaviour
     void Die()
     {
         isDead = true;
-        escortActive = false;
         halted = true;
 
         if (healthBarRoot != null)
@@ -178,10 +187,12 @@ public class IfaEscortController : MonoBehaviour
         if (audioSource != null && deathSound != null)
             audioSource.PlayOneShot(deathSound);
 
-        // ⭐ Kill player ONLY if escort is active
+        // Kill player ONLY if escort is active
         PlayerController2D p = FindObjectOfType<PlayerController2D>();
         if (p != null && escortActive)
             p.ForceKill();
+
+        escortActive = false;
 
         StartCoroutine(RespawnRoutine());
     }
@@ -215,11 +226,41 @@ public class IfaEscortController : MonoBehaviour
             Die();
     }
 
+    public void ReachDestination()
+    {
+        reachedEnd = true;
+        escortActive = false;
+        halted = true;
+        isDead = false;
+
+        animator.enabled = false;
+        sr.sprite = defaultIdleSprite;
+
+        if (healthBarRoot != null)
+            healthBarRoot.SetActive(false);
+
+        if (hitboxCollider != null)
+            hitboxCollider.enabled = false;
+
+        if (statusImage != null)
+            statusImage.enabled = false;
+
+        if (dialogueObject != null)
+            dialogueObject.SetActive(true);
+    }
+
     void UpdateStatusSprite()
     {
         if (statusImage == null)
             return;
 
+        if (!escortActive)
+        {
+            statusImage.enabled = false;
+            return;
+        }
+
+        statusImage.enabled = true;
         statusImage.sprite = halted ? haltedSprite : walkingSprite;
     }
 

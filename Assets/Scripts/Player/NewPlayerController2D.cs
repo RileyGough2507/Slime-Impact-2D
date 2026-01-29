@@ -141,7 +141,6 @@ public class PlayerController2D : MonoBehaviour
 
     void HandleAttack()
     {
-        // ⭐ NEW: Cannot attack without spear
         if (!hasSpear)
             return;
 
@@ -174,7 +173,6 @@ public class PlayerController2D : MonoBehaviour
             }
         }
     }
-
 
     void PlayRandomAttackSound()
     {
@@ -307,12 +305,10 @@ public class PlayerController2D : MonoBehaviour
         if (isDead)
             return;
 
-        // ⭐ SHIELD CHECK GOES HERE
         PlayerShield shield = GetComponent<PlayerShield>();
         if (shield != null && shield.TryBlockHit())
-            return; // Shield absorbed the hit, so stop here
+            return;
 
-        // ⭐ Your normal damage code continues below
         currentHealth -= amount;
         if (currentHealth < 0)
             currentHealth = 0;
@@ -336,6 +332,11 @@ public class PlayerController2D : MonoBehaviour
 
             animator.Play(facingRight ? deathRightAnim : deathLeftAnim);
 
+            // Kill Ifa ONLY if escort is active
+            IfaEscortController ifa = FindObjectOfType<IfaEscortController>();
+            if (ifa != null && ifa.escortActive)
+                ifa.ForceKill();
+
             Invoke(nameof(RespawnAtCheckpoint), 1.0f);
             return;
         }
@@ -349,6 +350,13 @@ public class PlayerController2D : MonoBehaviour
         currentHealth = maxHealth;
         UpdateGhostHearts();
         isDead = false;
+    }
+
+    // Allows Ifa to kill the player safely
+    public void ForceKill()
+    {
+        if (!isDead)
+            TakeDamage(currentHealth);
     }
 
     // -----------------------------
@@ -377,12 +385,6 @@ public class PlayerController2D : MonoBehaviour
             heartbeatPlaying = false;
         }
     }
+
     public bool FacingRight => facingRight;
-
-    public void ForceKill()
-    {
-        if (!isDead)
-            TakeDamage(currentHealth); // instantly kill the player
-    }
-
 }
