@@ -5,8 +5,8 @@ public class BlueSlime : MonoBehaviour
 {
     [Header("References")]
     public Transform player;
-    public Transform ifa;              // ⭐ NEW
-    public LayerMask ifaLayer;         // ⭐ NEW
+    public Transform ifa;
+    public LayerMask ifaLayer;
     public Animator animator;
     public Rigidbody2D rb;
     private SpriteRenderer sr;
@@ -80,7 +80,7 @@ public class BlueSlime : MonoBehaviour
         if (isAttacking)
             return;
 
-        Transform target = GetTarget();   // ⭐ NEW
+        Transform target = GetTarget();
 
         if (target != null)
             facingRight = target.position.x > transform.position.x;
@@ -99,14 +99,13 @@ public class BlueSlime : MonoBehaviour
             Idle();
     }
 
-    // ⭐ NEW — chooses Ifa over player if both are in range
     Transform GetTarget()
     {
         bool playerInRange = player != null && Vector2.Distance(transform.position, player.position) <= detectionRange;
         bool ifaInRange = ifa != null && Vector2.Distance(transform.position, ifa.position) <= detectionRange;
 
         if (ifaInRange && ifa != null)
-            return ifa; // Ifa ALWAYS takes priority
+            return ifa;
 
         if (playerInRange)
             return player;
@@ -132,18 +131,18 @@ public class BlueSlime : MonoBehaviour
         rb.velocity = new Vector2(rb.velocity.x, hopForce);
     }
 
-    // ⭐ NEW — checks attack range for either target
+    // ⭐ NEW — OverlapCircle instead of raycast
     bool TargetInAttackRange(Transform target)
     {
         if (target == null)
             return false;
 
-        Vector2 direction = facingRight ? Vector2.right : Vector2.left;
-        Vector2 origin = transform.position + new Vector3(direction.x * 0.5f, 0, 0);
-
         int combinedMask = playerLayer | ifaLayer;
 
-        return Physics2D.Raycast(origin, direction, attackHitboxDistance, combinedMask);
+        Vector2 direction = facingRight ? Vector2.right : Vector2.left;
+        Vector2 center = (Vector2)transform.position + direction * 0.5f;
+
+        return Physics2D.OverlapCircle(center, attackHitboxDistance, combinedMask) != null;
     }
 
     void ChaseTarget(Transform target)
@@ -197,35 +196,39 @@ public class BlueSlime : MonoBehaviour
         Invoke(nameof(EndAttack), 0.6f);
     }
 
+    // ⭐ NEW — OverlapCircleAll for guaranteed hits
     void DealDamage()
     {
         if (isDead)
             return;
 
-        Vector2 direction = facingRight ? Vector2.right : Vector2.left;
-        Vector2 origin = transform.position + new Vector3(direction.x * 0.5f, 0, 0);
-
         int combinedMask = playerLayer | ifaLayer;
 
-        RaycastHit2D hit = Physics2D.Raycast(origin, direction, attackHitboxDistance, combinedMask);
+        Vector2 direction = facingRight ? Vector2.right : Vector2.left;
+        Vector2 center = (Vector2)transform.position + direction * 0.5f;
 
-        if (hit.collider == null)
-            return;
+        Collider2D[] hits = Physics2D.OverlapCircleAll(center, attackHitboxDistance, combinedMask);
 
-        // Damage player
-        PlayerController2D p = hit.collider.GetComponent<PlayerController2D>();
-        if (p != null)
+        foreach (Collider2D col in hits)
         {
-            p.TakeDamage(1);
-            return;
-        }
+            if (col == null)
+                continue;
 
-        // ⭐ Damage Ifa
-        IfaEscortController ifaController = hit.collider.GetComponent<IfaEscortController>();
-        if (ifaController != null)
-        {
-            ifaController.TakeDamage(1);
-            return;
+            // Ifa first
+            IfaEscortController ifaController = col.GetComponent<IfaEscortController>();
+            if (ifaController != null)
+            {
+                ifaController.TakeDamage(1);
+                return;
+            }
+
+            // Player second
+            PlayerController2D p = col.GetComponent<PlayerController2D>();
+            if (p != null)
+            {
+                p.TakeDamage(1);
+                return;
+            }
         }
     }
 
@@ -279,9 +282,9 @@ public class BlueSlime : MonoBehaviour
         Gizmos.color = Color.green;
 
         Vector2 direction = facingRight ? Vector2.right : Vector2.left;
-        Vector2 origin = transform.position + new Vector3(direction.x * 0.5f, 0, 0);
+        Vector2 center = (Vector2)transform.position + direction * 0.5f;
 
-        Gizmos.DrawLine(origin, origin + direction * attackHitboxDistance);
+        Gizmos.DrawWireSphere(center, attackHitboxDistance);
     }
 
     public void TakeDamage(int amount)

@@ -379,4 +379,10 @@ public class PlayerController2D : MonoBehaviour
     }
     public bool FacingRight => facingRight;
 
+    public void ForceKill()
+    {
+        if (!isDead)
+            TakeDamage(currentHealth); // instantly kill the player
+    }
+
 }
