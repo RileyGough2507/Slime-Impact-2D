@@ -38,25 +38,34 @@ public class ScientistBoss : MonoBehaviour
     [Header("Animation Names")]
     public string walkLeftAnim;
     public string walkRightAnim;
+
     public string laserLeftAnim;
     public string laserRightAnim;
+
     public string missileLeftAnim;
     public string missileRightAnim;
+
     public string chargeLeftAnim;
     public string chargeRightAnim;
-    public string spinAnim;
+
+    public string spinLeftAnim;
+    public string spinRightAnim;
+
     public string deathAnim;
 
     [Header("Laser Attack")]
-    public Transform laserFirePoint;
-    public GameObject laserPrefab;
+    public Transform laserFirePointLeft;
+    public Transform laserFirePointRight;
+    public GameObject laserLeftPrefab;
+    public GameObject laserRightPrefab;
     public float laserDistance = 10f;
     public float laserCooldown = 5f;
     public AudioClip laserChargeSfx;
     public AudioClip laserFireSfx;
 
     [Header("Missile Attack")]
-    public Transform missileFirePoint;
+    public Transform missileFirePointLeft;
+    public Transform missileFirePointRight;
     public GameObject missilePrefab;
     public float missileCooldown = 20f;
     public AudioClip missileFireSfx;
@@ -128,7 +137,6 @@ public class ScientistBoss : MonoBehaviour
         float myX = transform.position.x;
 
         facingRight = playerX > myX;
-        spriteRenderer.flipX = !facingRight;
 
         float dir = 0f;
 
@@ -143,19 +151,16 @@ public class ScientistBoss : MonoBehaviour
         {
             dir = 1f;
             facingRight = true;
-            spriteRenderer.flipX = false;
         }
         else if (nextX > rightBound.position.x)
         {
             dir = -1f;
             facingRight = false;
-            spriteRenderer.flipX = true;
         }
 
         if (dir != 0f)
         {
             transform.Translate(Vector3.right * dir * moveSpeed * Time.deltaTime);
-
             anim.Play(facingRight ? walkRightAnim : walkLeftAnim);
         }
     }
@@ -196,7 +201,6 @@ public class ScientistBoss : MonoBehaviour
         laserTimer = 0f;
 
         facingRight = player.transform.position.x > transform.position.x;
-        spriteRenderer.flipX = !facingRight;
 
         if (laserChargeSfx != null)
             audioSource.PlayOneShot(laserChargeSfx);
@@ -209,10 +213,17 @@ public class ScientistBoss : MonoBehaviour
         state = BossState.Idle;
     }
 
-    // Called by animation event
-    public void FireLaserEvent()
+    public void FireLaserRightEvent()
     {
-        Instantiate(laserPrefab, laserFirePoint.position, laserFirePoint.rotation);
+        Instantiate(laserRightPrefab, laserFirePointRight.position, Quaternion.identity);
+
+        if (laserFireSfx != null)
+            audioSource.PlayOneShot(laserFireSfx);
+    }
+
+    public void FireLaserLeftEvent()
+    {
+        Instantiate(laserLeftPrefab, laserFirePointLeft.position, Quaternion.identity);
 
         if (laserFireSfx != null)
             audioSource.PlayOneShot(laserFireSfx);
@@ -228,18 +239,14 @@ public class ScientistBoss : MonoBehaviour
         missileTimer = 0f;
 
         facingRight = player.transform.position.x > transform.position.x;
-        spriteRenderer.flipX = !facingRight;
 
         anim.Play(facingRight ? missileRightAnim : missileLeftAnim);
 
         yield return new WaitForSeconds(0.5f);
 
-        Vector3 target = player.transform.position;
+        Transform firePoint = facingRight ? missileFirePointRight : missileFirePointLeft;
 
-        GameObject missile = Instantiate(missilePrefab, missileFirePoint.position, Quaternion.identity);
-
-        // Your missile script should handle falling toward target.x
-        // Example: missile.GetComponent<Missile>().Init(target);
+        Instantiate(missilePrefab, firePoint.position, Quaternion.identity);
 
         if (missileFireSfx != null)
             audioSource.PlayOneShot(missileFireSfx);
@@ -260,7 +267,6 @@ public class ScientistBoss : MonoBehaviour
         spinTimer = 0f;
 
         facingRight = player.transform.position.x > transform.position.x;
-        spriteRenderer.flipX = !facingRight;
 
         anim.Play(facingRight ? chargeRightAnim : chargeLeftAnim);
 
@@ -273,7 +279,7 @@ public class ScientistBoss : MonoBehaviour
 
         spinTarget = facingRight ? rightBound.position : leftBound.position;
 
-        anim.Play(spinAnim);
+        anim.Play(facingRight ? spinRightAnim : spinLeftAnim);
     }
 
     void HandleSpinMovement()
@@ -338,7 +344,6 @@ public class ScientistBoss : MonoBehaviour
         this.enabled = false;
     }
 
-    // Called by PlayerController2D when player dies
     public void OnPlayerDied()
     {
         if (isDead) return;
