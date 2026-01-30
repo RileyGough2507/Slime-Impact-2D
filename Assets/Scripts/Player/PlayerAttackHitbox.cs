@@ -45,5 +45,15 @@ public class PlayerAttackHitbox : MonoBehaviour
             bossUIRoot.SetActive(true);
             boss.TakeHitFrom(this.gameObject);
         }
+
+        // SCIENTIST BOSS
+        ScientistBoss sci = other.GetComponent<ScientistBoss>();
+        if (sci != null)
+        {
+            bossHealthUI.SetActive(true);
+            bossUIRoot.SetActive(true);
+            sci.TakeDamage(1);
+        }
+
     }
 }

@@ -20,18 +20,27 @@ public class ScientistBossIntro : MonoBehaviour
     public string enterSuitAnim;
 
     [Header("Suit")]
-    public GameObject suitObject;
+    public Transform suitObject;       // Suit visual object
+    public float stopDistance = 1f;    // Distance to stop near suit
 
-    [Header("Boss Fight")]
+    [Header("Boss")]
+    public GameObject bossObject;      // Boss sprite/prefab to enable
     public GameObject bossFightScriptObject;
+
+    [Header("Movement")]
+    public float walkSpeed = 6f;
 
     private bool cutsceneRunning = false;
     private bool walkingRight = false;
+    private bool suitEntered = false;
 
     void Start()
     {
         if (exclamationMark != null)
             exclamationMark.SetActive(false);
+
+        if (bossObject != null)
+            bossObject.SetActive(false);
 
         if (bossFightScriptObject != null)
             bossFightScriptObject.SetActive(false);
@@ -48,29 +57,22 @@ public class ScientistBossIntro : MonoBehaviour
 
     IEnumerator Cutscene()
     {
-        // Freeze player
         player.enabled = false;
         player.rb.velocity = Vector2.zero;
 
-        // Move camera to scientist
         cam.SetTarget(cameraFocusPoint);
         yield return new WaitForSeconds(1f);
 
-        // Flip scientist to face player
         scientistSprite.flipX = true;
-
-        // Exclamation mark + sound
         exclamationMark.SetActive(true);
         audioSource.PlayOneShot(alertSound);
         yield return new WaitForSeconds(1f);
         exclamationMark.SetActive(false);
 
-        // Start walking RIGHT
         scientistSprite.flipX = false;
         scientistAnim.Play(moveAnim, 0, 0f);
         walkingRight = true;
 
-        // Camera follows scientist
         cam.SetTarget(scientist);
     }
 
@@ -78,30 +80,36 @@ public class ScientistBossIntro : MonoBehaviour
     {
         if (walkingRight)
         {
-            scientist.Translate(Vector3.right * 6f * Time.deltaTime, Space.World);
-            scientistAnim.Play(moveAnim, 0, 0f);
+            scientist.Translate(Vector3.right * walkSpeed * Time.deltaTime, Space.World);
+
+            float distance = Vector2.Distance(scientist.position, suitObject.position);
+
+            if (distance <= stopDistance && !suitEntered)
+            {
+                walkingRight = false;
+                suitEntered = true;
+
+                suitObject.gameObject.SetActive(false);
+
+                scientistAnim.Play(enterSuitAnim, 0, 0f);
+                audioSource.PlayOneShot(enterSuitSound);
+
+                StartCoroutine(HandleBossAppearance());
+            }
         }
     }
 
-    // ⭐ THIS is the method SuitTrigger.cs needs
-    public void OnScientistHitSuit()
-    {
-        walkingRight = false; // stop movement immediately
-
-        // Hide suit
-        if (suitObject != null)
-            suitObject.SetActive(false);
-
-        // Play enter suit animation with full priority
-        scientistAnim.Play(enterSuitAnim, 0, 0f);
-        audioSource.PlayOneShot(enterSuitSound);
-
-        StartCoroutine(ActivateBossFight());
-    }
-
-    IEnumerator ActivateBossFight()
+    IEnumerator HandleBossAppearance()
     {
         yield return new WaitForSeconds(1.5f);
+
+        scientist.gameObject.SetActive(false);
+
+        if (bossObject != null)
+        {
+            bossObject.transform.position = scientist.position;
+            bossObject.SetActive(true);
+        }
 
         if (bossFightScriptObject != null)
             bossFightScriptObject.SetActive(true);
