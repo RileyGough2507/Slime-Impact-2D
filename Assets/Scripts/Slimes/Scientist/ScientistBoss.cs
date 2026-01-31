@@ -8,6 +8,7 @@ public class ScientistBoss : MonoBehaviour
     {
         Idle,
         Moving,
+        Fleeing,
         Laser,
         Missile,
         ChargeSpin,
@@ -19,6 +20,7 @@ public class ScientistBoss : MonoBehaviour
     public PlayerController2D player;
     public CameraFollow cam;
     public Slider healthSlider;
+    public GameObject scientistUIRoot;
     public SpriteRenderer spriteRenderer;
     public Animator anim;
     public AudioSource audioSource;
@@ -100,6 +102,9 @@ public class ScientistBoss : MonoBehaviour
     private float spinTimeRemaining;
     private Transform currentSpinTarget;
 
+    // Fleeing target
+    private Transform fleeTarget;
+
     public bool IsSpinning => state == BossState.Spinning;
 
     void Start()
@@ -134,6 +139,10 @@ public class ScientistBoss : MonoBehaviour
                 HandleAttacks(dist);
                 break;
 
+            case BossState.Fleeing:
+                HandleFleeing();
+                break;
+
             case BossState.Spinning:
                 HandleSpinMovement();
                 break;
@@ -141,7 +150,7 @@ public class ScientistBoss : MonoBehaviour
     }
 
     // ---------------------------------------------------------
-    // MOVEMENT — NO KEEP DISTANCE, PANIC RUN WHEN CLOSE
+    // MOVEMENT — IDLE ONLY (NO KEEP DISTANCE)
     // ---------------------------------------------------------
     void HandleMovement(float dist)
     {
@@ -154,23 +163,31 @@ public class ScientistBoss : MonoBehaviour
 
         facingRight = playerX > myX;
 
-        // NEW: If player gets within 5 units → sprint to the furthest bound
-        if (dist < 5f)
+        anim.Play(facingRight ? idleRightAnim : idleLeftAnim);
+    }
+
+    // ---------------------------------------------------------
+    // FLEEING BEHAVIOR — SPEED 22.5
+    // ---------------------------------------------------------
+    void HandleFleeing()
+    {
+        if (fleeTarget == null)
         {
-            float distToLeft = Mathf.Abs(myX - leftBound.position.x);
-            float distToRight = Mathf.Abs(myX - rightBound.position.x);
-
-            bool goRight = distToRight > distToLeft;
-            float dir = goRight ? 1f : -1f;
-
-            transform.Translate(Vector3.right * dir * 15f * Time.deltaTime);
-
-            anim.Play(goRight ? walkRightAnim : walkLeftAnim);
+            state = BossState.Idle;
             return;
         }
 
-        // Otherwise idle
-        anim.Play(facingRight ? idleRightAnim : idleLeftAnim);
+        float dir = Mathf.Sign(fleeTarget.position.x - transform.position.x);
+        facingRight = dir > 0;
+
+        transform.Translate(Vector3.right * dir * 22.5f * Time.deltaTime);
+
+        anim.Play(facingRight ? walkRightAnim : walkLeftAnim);
+
+        if (Mathf.Abs(transform.position.x - fleeTarget.position.x) < 0.2f)
+        {
+            state = BossState.Idle;
+        }
     }
 
     // ---------------------------------------------------------
@@ -264,7 +281,7 @@ public class ScientistBoss : MonoBehaviour
     }
 
     // ---------------------------------------------------------
-    // SPIN ATTACK (UNCHANGED — WORKING PERFECTLY)
+    // SPIN ATTACK — LOOPING SFX
     // ---------------------------------------------------------
     IEnumerator DoSpin()
     {
@@ -284,8 +301,13 @@ public class ScientistBoss : MonoBehaviour
         if (spinHitbox != null)
             spinHitbox.SetActive(true);
 
+        // Loop spin sound
         if (spinSfx != null)
-            audioSource.PlayOneShot(spinSfx);
+        {
+            audioSource.clip = spinSfx;
+            audioSource.loop = true;
+            audioSource.Play();
+        }
 
         currentSpinTarget = (Mathf.Abs(transform.position.x - spinPointA.position.x) <
                              Mathf.Abs(transform.position.x - spinPointB.position.x))
@@ -315,6 +337,10 @@ public class ScientistBoss : MonoBehaviour
             if (spinHitbox != null)
                 spinHitbox.SetActive(false);
 
+            // Stop looping spin sound
+            audioSource.loop = false;
+            audioSource.Stop();
+
             isAttacking = false;
             state = BossState.Idle;
         }
@@ -332,6 +358,14 @@ public class ScientistBoss : MonoBehaviour
         if (healthSlider != null)
             healthSlider.value = currentHealth;
 
+        // Trigger fleeing behavior
+        float myX = transform.position.x;
+        float distToLeft = Mathf.Abs(myX - leftBound.position.x);
+        float distToRight = Mathf.Abs(myX - rightBound.position.x);
+
+        fleeTarget = distToRight > distToLeft ? rightBound : leftBound;
+        state = BossState.Fleeing;
+
         if (currentHealth <= 0)
         {
             StartCoroutine(DoDeath());
@@ -347,6 +381,10 @@ public class ScientistBoss : MonoBehaviour
         if (spinHitbox != null)
             spinHitbox.SetActive(false);
 
+        // Stop spin sound if somehow active
+        audioSource.loop = false;
+        audioSource.Stop();
+
         cam.SetTarget(transform);
 
         if (deathSfx != null)
@@ -356,8 +394,9 @@ public class ScientistBoss : MonoBehaviour
 
         yield return new WaitForSeconds(2f);
 
-        if (healthSlider != null)
-            healthSlider.gameObject.SetActive(false);
+        // Hide entire UI
+        if (scientistUIRoot != null)
+            scientistUIRoot.SetActive(false);
 
         anim.enabled = false;
         spriteRenderer.sprite = deadSprite;

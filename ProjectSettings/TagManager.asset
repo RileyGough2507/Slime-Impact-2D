@@ -18,8 +18,8 @@ TagManager:
   - Enemy
   - damageLayers
   - ifaLayer
-  - 
-  - 
+  - Boss
+  - AttackHitbox
   - 
   - 
   - 

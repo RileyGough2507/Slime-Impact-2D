@@ -4,8 +4,13 @@ public class PlayerAttackHitbox : MonoBehaviour
 {
     public PlayerController2D player;
 
-    public GameObject bossHealthUI;
-    public GameObject bossUIRoot;
+    [Header("Red Riot UI")]
+    public GameObject redRiotHealthUI;
+    public GameObject redRiotUIRoot;
+
+    [Header("Scientist UI")]
+    public GameObject scientistHealthUI;
+    public GameObject scientistUIRoot;
 
     private void OnTriggerEnter2D(Collider2D other)
     {
@@ -36,24 +41,24 @@ public class PlayerAttackHitbox : MonoBehaviour
             return;
         }
 
-
         // RED RIOT
-        RedRiotBoss boss = other.GetComponent<RedRiotBoss>();
-        if (boss != null)
+        RedRiotBoss riot = other.GetComponent<RedRiotBoss>();
+        if (riot != null)
         {
-            bossHealthUI.SetActive(true);
-            bossUIRoot.SetActive(true);
-            boss.TakeHitFrom(this.gameObject);
+            redRiotHealthUI.SetActive(true);
+            redRiotUIRoot.SetActive(true);
+            riot.TakeHitFrom(this.gameObject);
+            return;
         }
 
         // SCIENTIST BOSS
         ScientistBoss sci = other.GetComponent<ScientistBoss>();
         if (sci != null)
         {
-            bossHealthUI.SetActive(true);
-            bossUIRoot.SetActive(true);
+            scientistHealthUI.SetActive(true);
+            scientistUIRoot.SetActive(true);
             sci.TakeDamage(1);
+            return;
         }
-
     }
 }
