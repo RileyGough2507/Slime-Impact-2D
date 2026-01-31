@@ -12,7 +12,8 @@ public class PortalTeleporter : MonoBehaviour
     public Transform teleportTarget;      // Where the player will appear
 
     [Header("Audio")]
-    public AudioSource portalEnterAudio;  // Plays when player touches portal
+    public AudioClip portalEnterClip;     // Clip played when entering portal
+    public AudioSource enterAudioSource;  // AudioSource used to play the enter clip
     public AudioSource arrivalAudio;      // Plays when player arrives at destination
 
     [Header("Player Tag")]
@@ -35,9 +36,9 @@ public class PortalTeleporter : MonoBehaviour
         if (!other.CompareTag(playerTag))
             return;
 
-        // Play portal enter sound
-        if (portalEnterAudio != null)
-            portalEnterAudio.Play();
+        // Play portal enter sound through external AudioSource
+        if (enterAudioSource != null && portalEnterClip != null)
+            enterAudioSource.PlayOneShot(portalEnterClip);
 
         // Teleport player
         if (teleportTarget != null)
