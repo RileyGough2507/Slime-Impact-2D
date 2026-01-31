@@ -22,12 +22,21 @@ public class LightMusicSwitchTrigger : MonoBehaviour
         if (newGlobalLight != null)
             newGlobalLight.SetActive(true);
 
-        // Stop old music
-        if (currentMusicSource != null)
-            currentMusicSource.Stop();
-
-        // Start new music
+        // If the new music is already playing, do nothing
         if (newMusicSource != null)
-            newMusicSource.Play();
+        {
+            bool sameClip = currentMusicSource != null &&
+                            currentMusicSource.clip == newMusicSource.clip;
+
+            bool alreadyPlaying = newMusicSource.isPlaying;
+
+            if (!sameClip && !alreadyPlaying)
+            {
+                if (currentMusicSource != null)
+                    currentMusicSource.Stop();
+
+                newMusicSource.Play();
+            }
+        }
     }
 }

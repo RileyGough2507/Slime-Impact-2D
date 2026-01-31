@@ -25,6 +25,9 @@ public class ScientistBoss : MonoBehaviour
     public Animator anim;
     public AudioSource audioSource;
 
+    [Header("Music")]
+    public AudioSource musicSource;
+
     [Header("Room Bounds")]
     public Transform leftBound;
     public Transform rightBound;
@@ -87,6 +90,11 @@ public class ScientistBoss : MonoBehaviour
     [Header("Spin Hitbox")]
     public GameObject spinHitbox;
 
+    [Header("Portal")]
+    public GameObject portalPrefab;
+    public Transform portalSpawnPoint;
+    public AudioClip portalAppearSfx;
+
     [Header("Death")]
     public AudioClip deathSfx;
 
@@ -102,7 +110,6 @@ public class ScientistBoss : MonoBehaviour
     private float spinTimeRemaining;
     private Transform currentSpinTarget;
 
-    // Fleeing target
     private Transform fleeTarget;
 
     public bool IsSpinning => state == BossState.Spinning;
@@ -150,7 +157,7 @@ public class ScientistBoss : MonoBehaviour
     }
 
     // ---------------------------------------------------------
-    // MOVEMENT — IDLE ONLY (NO KEEP DISTANCE)
+    // MOVEMENT — IDLE ONLY
     // ---------------------------------------------------------
     void HandleMovement(float dist)
     {
@@ -167,7 +174,7 @@ public class ScientistBoss : MonoBehaviour
     }
 
     // ---------------------------------------------------------
-    // FLEEING BEHAVIOR — SPEED 22.5
+    // FLEEING — SPEED 22.5
     // ---------------------------------------------------------
     void HandleFleeing()
     {
@@ -253,7 +260,7 @@ public class ScientistBoss : MonoBehaviour
     }
 
     // ---------------------------------------------------------
-    // MISSILE ATTACK
+    // MISSILE ATTACK — CORRECT DIRECTION
     // ---------------------------------------------------------
     IEnumerator DoMissile()
     {
@@ -269,7 +276,10 @@ public class ScientistBoss : MonoBehaviour
 
         Transform firePoint = facingRight ? missileFirePointRight : missileFirePointLeft;
 
-        Instantiate(missilePrefab, firePoint.position, Quaternion.identity);
+        GameObject m = Instantiate(missilePrefab, firePoint.position, Quaternion.identity);
+
+        int dir = facingRight ? 1 : -1;
+        m.GetComponent<ScientistMissile>().Init(player.transform.position.x, dir);
 
         if (missileFireSfx != null)
             audioSource.PlayOneShot(missileFireSfx);
@@ -301,7 +311,6 @@ public class ScientistBoss : MonoBehaviour
         if (spinHitbox != null)
             spinHitbox.SetActive(true);
 
-        // Loop spin sound
         if (spinSfx != null)
         {
             audioSource.clip = spinSfx;
@@ -337,7 +346,6 @@ public class ScientistBoss : MonoBehaviour
             if (spinHitbox != null)
                 spinHitbox.SetActive(false);
 
-            // Stop looping spin sound
             audioSource.loop = false;
             audioSource.Stop();
 
@@ -358,7 +366,15 @@ public class ScientistBoss : MonoBehaviour
         if (healthSlider != null)
             healthSlider.value = currentHealth;
 
-        // Trigger fleeing behavior
+        // DO NOT interrupt spin
+        if (state == BossState.Spinning || state == BossState.ChargeSpin)
+        {
+            if (currentHealth <= 0)
+                StartCoroutine(DoDeath());
+            return;
+        }
+
+        // Normal fleeing behavior
         float myX = transform.position.x;
         float distToLeft = Mathf.Abs(myX - leftBound.position.x);
         float distToRight = Mathf.Abs(myX - rightBound.position.x);
@@ -381,9 +397,11 @@ public class ScientistBoss : MonoBehaviour
         if (spinHitbox != null)
             spinHitbox.SetActive(false);
 
-        // Stop spin sound if somehow active
         audioSource.loop = false;
         audioSource.Stop();
+
+        if (musicSource != null)
+            musicSource.Stop();
 
         cam.SetTarget(transform);
 
@@ -394,7 +412,15 @@ public class ScientistBoss : MonoBehaviour
 
         yield return new WaitForSeconds(2f);
 
-        // Hide entire UI
+        // Spawn portal after animation
+        if (portalPrefab != null && portalSpawnPoint != null)
+        {
+            Instantiate(portalPrefab, portalSpawnPoint.position, Quaternion.identity);
+
+            if (portalAppearSfx != null)
+                audioSource.PlayOneShot(portalAppearSfx);
+        }
+
         if (scientistUIRoot != null)
             scientistUIRoot.SetActive(false);
 
